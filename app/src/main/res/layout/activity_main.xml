@@ -12,13 +12,13 @@
         android:id="@+id/sample_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:text="Hello World!"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/plot" />
+        app:layout_constraintTop_toBottomOf="@+id/plot"
+        tools:layout_editor_absoluteY="420dp" />
 
     <SeekBar
         android:id="@+id/seekBar"
@@ -35,19 +35,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sample_text" />
 
-    <com.androidplot.xy.XYPlot
-        android:id="@+id/plot"
-        style="@style/APDefacto.Dark"
-        android:layout_width="0dp"
-        android:layout_height="400dp"
-        ap:backgroundColor="#335588"
-        ap:domainTitle="I"
-        ap:rangeTitle="Q"
-        ap:renderMode="use_background_thread"
-        ap:title="Spectrum"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <RadioGroup
+        android:id="@+id/radio_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        ap:layout_constraintBottom_toTopOf="@+id/sample_text"
+        ap:layout_constraintEnd_toEndOf="parent"
+        ap:layout_constraintStart_toStartOf="parent"
+        ap:layout_constraintTop_toTopOf="parent">
+
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Button"
+        ap:layout_constraintBottom_toTopOf="@+id/sample_text"
+        ap:layout_constraintEnd_toEndOf="parent"
+        ap:layout_constraintStart_toStartOf="parent"
+        ap:layout_constraintTop_toBottomOf="@+id/radio_group" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

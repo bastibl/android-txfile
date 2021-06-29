@@ -1,12 +1,10 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
-
+    compileSdkVersion 29
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion 28
+        minSdkVersion 29
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -25,6 +23,8 @@ android {
             path file('src/main/cpp/CMakeLists.txt')
         }
     }
+    buildToolsVersion '30.0.2'
+    ndkVersion '21.3.6528147'
 }
 
 dependencies {

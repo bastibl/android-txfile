@@ -2,15 +2,12 @@ apply plugin: 'com.android.application'
 
 apply plugin: 'kotlin-android'
 
-apply plugin: 'kotlin-android-extensions'
-
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 29
     defaultConfig {
         applicationId "net.bastibl.wlan"
-        minSdkVersion 28
-        targetSdkVersion 28
+        minSdkVersion 29
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -43,22 +40,28 @@ android {
 
     sourceSets {
         main {
-            jniLibs.srcDirs = ['../../src/gnuradio-android/toolchain/jni', '../../../Android/Sdk/ndk/20.0.5594570/sources/cxx-stl/llvm-libc++/libs']
+            jniLibs.srcDirs = ['../../../Android/Sdk/ndk/20.0.5594570/sources/cxx-stl/llvm-libc++/libs']
         }
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    buildToolsVersion '30.0.2'
+    ndkVersion '21.3.6528147'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation fileTree(dir: '../controlport/libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'org.zeromq:jeromq:0.5.1'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'org.zeromq:jeromq:0.5.2'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation project(path: ':controlport')
-    implementation "com.androidplot:androidplot-core:1.5.7"
 }
