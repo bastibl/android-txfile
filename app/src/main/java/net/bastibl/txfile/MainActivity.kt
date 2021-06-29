@@ -27,27 +27,9 @@ private const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
 
 class MainActivity : AppCompatActivity() {
 
+    private var haveStoragePermission : Boolean = false
+    private var haveHWPermission : Boolean = false
     private lateinit var binding: ActivityMainBinding
-
-    private val usbReceiver = object : BroadcastReceiver() {
-
-        @Suppress("IMPLICIT_CAST_TO_ANY")
-        override fun onReceive(context: Context, intent: Intent) {
-            if (ACTION_USB_PERMISSION == intent.action) {
-                synchronized(this) {
-                    val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
-
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        device?.apply {
-                            setupUSB(device)
-                        }
-                    } else {
-                        Log.d("GR", "permission denied for device $device")
-                    }
-                }
-            }
-        }
-    }
 
     private fun checkStoragePermission() {
         if (ContextCompat.checkSelfPermission(this,
@@ -58,7 +40,17 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 123)
         } else {
-            checkHWPermission()
+            haveStoragePermission = true
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int,
+                                            permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            123 -> {
+                haveStoragePermission = true
+            }
         }
     }
 
@@ -76,15 +68,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            123 -> {
-                checkHWPermission()
+    private val usbReceiver = object : BroadcastReceiver() {
+        @Suppress("IMPLICIT_CAST_TO_ANY")
+        override fun onReceive(context: Context, intent: Intent) {
+            if (ACTION_USB_PERMISSION == intent.action) {
+                synchronized(this) {
+                    val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        device?.apply {
+                            haveHWPermission = true
+                            setupUSB(device)
+                        }
+                    } else {
+                        Log.d("GR", "permission denied for device $device")
+                    }
+                }
             }
         }
     }
 
+    private var thread : Thread? = null;
+
+    @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -92,44 +98,92 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         checkStoragePermission()
+        checkHWPermission()
 
-        @Suppress("DEPRECATION")
-        val external = Environment.getExternalStorageDirectory()
-        // val gnuradioDir = File(external.toString() + File.separator + "gnuradio")
-        // val volkDir = File(external.toString() + File.separator + "volk")
-        // if (!gnuradioDir.exists()) {
-        //     Log.d("uhd", "UHD directory does not exist, creating.")
-        //     gnuradioDir.mkdirs()
-        // }
+        var files = assets.list("files")
+        if (files.isNullOrEmpty()) {
+            binding.textView.text = "no asset files found"
+            return
+        }
+        for (f in files!!) {
+            Log.d("uhd", "UHD asset file: $f")
+            val btn = RadioButton(this);
+            btn.text = f;
+            binding.radioGroup.addView(btn);
+        }
+        binding.radioGroup.check(1);
 
-        val assetManager = assets
-        try {
-            val files = assetManager.list("files")
-            for (f in files!!) {
-                Log.d("uhd", "UHD asset file: $f")
-                val btn = RadioButton(this);
-                btn.text = f;
-                binding.radioGroup.addView(btn);
+        binding.buttonSend.setOnClickListener {
+            if(!haveStoragePermission) {
+                binding.textView.text = "no storage permssion"
+                return@setOnClickListener
             }
-            //for (f in files) {
-            //    Log.d("uhd", "Copying file:$f")
-            //    val `in` = assetManager.open("uhd" + File.separator + f)
-            //    val out: OutputStream = FileOutputStream(uhdDir.toString() + File.separator + f)
-            //    copyFile(`in`, out)
-            //    `in`.close()
-            //    out.flush()
-            //    out.close()
+            //if(!haveHWPermission) {
+            //    binding.textView.text = "no HW permssion"
+            //    return@setOnClickListener
             //}
-        } catch (e: IOException) {
-            Log.e("uhd", "Failed to copy asset file", e)
+
+            thread?.let {
+                if(thread?.isAlive == true) {
+                    binding.textView.text = "flowgraph is running"
+                    return@setOnClickListener
+                }
+            }
+
+            binding.textView.text = "starting flowgraph"
+
+
+            @Suppress("DEPRECATION")
+            val external = Environment.getExternalStorageDirectory()
+
+            val grDir = File(external.toString() + File.separator + "gnuradio");
+            val volkDir = File(external.toString() + File.separator + "volk");
+            if (!grDir.exists()) {
+                Log.d("gr", "GNU Radio directory doesn't exist, creating.")
+                grDir.mkdirs()
+            }
+            if (!volkDir.exists()) {
+                Log.d("gr", "Volk directory doesn't exist, creating.")
+                volkDir.mkdirs()
+            }
+
+            try {
+                files = assets.list("gnuradio")
+                for (f in files!!) {
+                    val outFile = File(grDir.toString() + File.separator + f)
+                    if (outFile.exists()) {
+                        Log.d("gr", "Skipping file:$f")
+                        continue
+                    }
+
+                    Log.d("gr", "Copying file:$f")
+                    val inStream = assets.open("gnuradio" + File.separator + f)
+                    val out: OutputStream = FileOutputStream(grDir.toString() + File.separator + f)
+                    copyFile(inStream, out)
+                    inStream.close()
+                    out.flush()
+                    out.close()
+                }
+            } catch (e: IOException) {
+                Log.e("gr", "Failed to copy asset file", e)
+            }
+
+            thread = thread(start = true, priority = Thread.MAX_PRIORITY) {
+                fgInit(usbConnection?.fileDescriptor ?: 0, usbPath ?: "")
+                fgStart("foo")
+            }
         }
 
-        // thread(start=true) {
-        //     while (!Thread.currentThread().isInterrupted) {
-        //         // runOnUiThread {
-        //         // }
-        //     }
-        // }
+        binding.buttonStop.setOnClickListener {
+            thread?.let {
+                if(thread?.isAlive == true) {
+                    binding.textView.text = "flowgraph is running"
+                    fgStop();
+                    thread?.join();
+                    return@setOnClickListener
+                }
+            }
+        }
     }
 
     @Throws(IOException::class)
@@ -141,26 +195,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var usbConnection : UsbDeviceConnection? = null;
+    private var usbPath : String? = null;
+
     @SuppressLint("SetTextI18n")
     fun setupUSB(usbDevice: UsbDevice) {
 
         val manager = getSystemService(Context.USB_SERVICE) as UsbManager
-        val connection: UsbDeviceConnection = manager.openDevice(usbDevice)
+        usbConnection = manager.openDevice(usbDevice)
 
-        val fd = connection.fileDescriptor
-        val usbfsPath = usbDevice.deviceName
+        val fd = usbConnection?.fileDescriptor
+        usbPath = usbDevice.deviceName
 
         val vid = usbDevice.vendorId
         val pid = usbDevice.productId
 
-        Log.d("gnuradio", "#################### NEW RUN ###################")
-        Log.d("gnuradio", "Found fd: $fd  usbfs_path: $usbfsPath")
-        Log.d("gnuradio", "Found vid: $vid  pid: $pid")
+        Log.d("gr", "#################### NEW RUN ###################")
+        Log.d("gr", "Found fd: $fd  usbfs_path: $usbPath")
+        Log.d("gr", "Found vid: $vid  pid: $pid")
 
-        thread(start = true, priority = Thread.MAX_PRIORITY) {
-            fgInit(fd, usbfsPath)
-            fgStart(cacheDir.absolutePath)
-        }
     }
 
     override fun onStop() {
@@ -169,7 +222,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private external fun fgInit(fd: Int, usbfsPath: String): Void
-    private external fun fgStart(tmpName: String): Void
+    private external fun fgStart(fileName: String): Void
     private external fun fgStop(): Void
 
     companion object {

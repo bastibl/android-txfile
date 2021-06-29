@@ -24,7 +24,7 @@
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        ap:layout_constraintBottom_toBottomOf="parent"
+        ap:layout_constraintBottom_toTopOf="@+id/textView"
         ap:layout_constraintEnd_toEndOf="parent"
         ap:layout_constraintStart_toStartOf="parent"
         ap:layout_constraintTop_toTopOf="@id/radio_group">
@@ -50,5 +50,15 @@
             ap:layout_constraintStart_toStartOf="parent"
             ap:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text='""'
+        ap:layout_constraintBottom_toBottomOf="parent"
+        ap:layout_constraintEnd_toEndOf="parent"
+        ap:layout_constraintStart_toStartOf="parent"
+        ap:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
