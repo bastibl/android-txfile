@@ -100,15 +100,34 @@ class MainActivity : AppCompatActivity() {
         checkStoragePermission()
         checkHWPermission()
 
-        var files = assets.list("files")
-        if (files.isNullOrEmpty()) {
-            binding.textView.text = "no asset files found"
+        @Suppress("DEPRECATION")
+        val external = Environment.getExternalStorageDirectory()
+
+        val grDir = File(external.toString() + File.separator + "gnuradio");
+        if (!grDir.exists()) {
+            Log.d("gr", "GNU Radio directory doesn't exist, creating.")
+            grDir.mkdirs()
+        }
+        val volkDir = File(external.toString() + File.separator + "volk");
+        if (!volkDir.exists()) {
+            Log.d("gr", "Volk directory doesn't exist, creating.")
+            volkDir.mkdirs()
+        }
+        val sampleDir = File(grDir.toString() + File.separator + "samples")
+        if (!sampleDir.exists()) {
+            Log.d("gr", "Sample directory doesn't exist, creating.")
+            sampleDir.mkdirs()
+        }
+
+        val samples = sampleDir.listFiles();
+        if(samples.isEmpty()) {
+            binding.textView.text = "No Sampe files found."
+            Log.d("gr", "No Sampe files found.")
             return
         }
-        for (f in files!!) {
-            Log.d("uhd", "UHD asset file: $f")
+        samples.forEach {
             val btn = RadioButton(this);
-            btn.text = f;
+            btn.text = it.name;
             binding.radioGroup.addView(btn);
         }
         binding.radioGroup.check(1);
@@ -132,45 +151,12 @@ class MainActivity : AppCompatActivity() {
 
             binding.textView.text = "starting flowgraph"
 
-
-            @Suppress("DEPRECATION")
-            val external = Environment.getExternalStorageDirectory()
-
-            val grDir = File(external.toString() + File.separator + "gnuradio");
-            val volkDir = File(external.toString() + File.separator + "volk");
-            if (!grDir.exists()) {
-                Log.d("gr", "GNU Radio directory doesn't exist, creating.")
-                grDir.mkdirs()
-            }
-            if (!volkDir.exists()) {
-                Log.d("gr", "Volk directory doesn't exist, creating.")
-                volkDir.mkdirs()
-            }
-
-            try {
-                files = assets.list("gnuradio")
-                for (f in files!!) {
-                    val outFile = File(grDir.toString() + File.separator + f)
-                    if (outFile.exists()) {
-                        Log.d("gr", "Skipping file:$f")
-                        continue
-                    }
-
-                    Log.d("gr", "Copying file:$f")
-                    val inStream = assets.open("gnuradio" + File.separator + f)
-                    val out: OutputStream = FileOutputStream(grDir.toString() + File.separator + f)
-                    copyFile(inStream, out)
-                    inStream.close()
-                    out.flush()
-                    out.close()
-                }
-            } catch (e: IOException) {
-                Log.e("gr", "Failed to copy asset file", e)
-            }
+            val sampleFile = File(samples[binding.radioGroup.checkedRadioButtonId - 1].toString())
 
             thread = thread(start = true, priority = Thread.MAX_PRIORITY) {
-                fgInit(usbConnection?.fileDescriptor ?: 0, usbPath ?: "")
-                fgStart("foo")
+                fgInit(usbConnection?.fileDescriptor ?: 0, usbPath ?: "", sampleFile.toString())
+                fgStart()
+                Log.d("gr", "fg thread exiting")
             }
         }
 
@@ -180,18 +166,10 @@ class MainActivity : AppCompatActivity() {
                     binding.textView.text = "flowgraph is running"
                     fgStop();
                     thread?.join();
-                    return@setOnClickListener
+                } else {
+                    binding.textView.text = "thread is not alive"
                 }
             }
-        }
-    }
-
-    @Throws(IOException::class)
-    private fun copyFile(`in`: InputStream, out: OutputStream) {
-        val buffer = ByteArray(1024)
-        var read: Int
-        while (`in`.read(buffer).also { read = it } != -1) {
-            out.write(buffer, 0, read)
         }
     }
 
@@ -221,8 +199,8 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
     }
 
-    private external fun fgInit(fd: Int, usbfsPath: String): Void
-    private external fun fgStart(fileName: String): Void
+    private external fun fgInit(fd: Int, usbfsPath: String, sampleFile: String): Void
+    private external fun fgStart(): Void
     private external fun fgStop(): Void
 
     companion object {

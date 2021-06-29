@@ -18,12 +18,12 @@ gr::top_block_sptr tb;
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_net_bastibl_txfile_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int fd, jstring usbfsPath) {
+Java_net_bastibl_txfile_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int fd, jstring usbfsPath, jstring sampleFile) {
 
-    setenv("VOLK_CONFIGPATH", getenv("EXTERNAL_STORAGE"), 1);
     setenv("GR_CONF_CONTROLPORT_ON", "true", 1);
 
     const char *usbfs_path = env->GetStringUTFChars(usbfsPath, NULL);
+    const char *sample_file = env->GetStringUTFChars(sampleFile, NULL);
 
     tb = gr::make_top_block("txfile");
 
@@ -50,7 +50,7 @@ Java_net_bastibl_txfile_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int 
     gr::blocks::throttle::sptr throttle = gr::blocks::throttle::make(sizeof(gr_complex), 1e6, true);
     gr::blocks::null_sink::sptr null_sink = gr::blocks::null_sink::make(sizeof(gr_complex));
     gr::blocks::multiply_cc::sptr multiply = gr::blocks::multiply_cc::make(1);
-    gr::blocks::file_source::sptr file_source = gr::blocks::file_source::make(sizeof(gr_complex), "/home/basti/Downloads/ucssTxSig_UserID1_ModCod5_SF100_osf4.mat.bin", true, 0, 0);
+    gr::blocks::file_source::sptr file_source = gr::blocks::file_source::make(sizeof(gr_complex), sample_file, true, 0, 0);
     gr::analog::sig_source_c::sptr sig_source = gr::analog::sig_source_c::make(sample_rate, gr::analog::GR_COS_WAVE, LO_offset, .7, 0,0);
 
     tb->connect(file_source, 0, throttle, 0);
@@ -60,21 +60,17 @@ Java_net_bastibl_txfile_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int 
     tb->connect(sig_source, 0, multiply, 1);
     tb->connect(multiply, 0, null_sink, 0);
 
-    GR_DEBUG("gnuradio", "constructed flowgraph");
+    GR_DEBUG("gr", "constructed flowgraph");
 
     return nullptr;
 }
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_net_bastibl_txfile_MainActivity_fgStart(JNIEnv * env, jobject /*this*/, jstring tmpName) {
+Java_net_bastibl_txfile_MainActivity_fgStart(JNIEnv * env, jobject /*this*/) {
 
     nice(-200);
-    const char *tmp_c;
-    tmp_c = env->GetStringUTFChars(tmpName, NULL);
-    setenv("TMP", tmp_c, 1);
-
-    GR_DEBUG("gnuradio", "JNI starting flowgraph");
+    GR_DEBUG("gr", "JNI starting flowgraph");
     tb->start();
 
     return nullptr;
@@ -83,8 +79,10 @@ Java_net_bastibl_txfile_MainActivity_fgStart(JNIEnv * env, jobject /*this*/, jst
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_net_bastibl_txfile_MainActivity_fgStop(JNIEnv * env, jobject /*this*/) {
-    tb->stop();
-    tb->wait();
-
+    if(tb) {
+        tb->stop();
+        tb->wait();
+        tb = nullptr;
+    }
     return nullptr;
 }
