@@ -18,7 +18,7 @@ gr::top_block_sptr tb;
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_net_bastibl_wlan_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int fd, jstring usbfsPath) {
+Java_net_bastibl_txfile_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int fd, jstring usbfsPath) {
 
     setenv("VOLK_CONFIGPATH", getenv("EXTERNAL_STORAGE"), 1);
     setenv("GR_CONF_CONTROLPORT_ON", "true", 1);
@@ -67,7 +67,7 @@ Java_net_bastibl_wlan_MainActivity_fgInit(JNIEnv * env, jobject /*this*/, int fd
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_net_bastibl_wlan_MainActivity_fgStart(JNIEnv * env, jobject /*this*/, jstring tmpName) {
+Java_net_bastibl_txfile_MainActivity_fgStart(JNIEnv * env, jobject /*this*/, jstring tmpName) {
 
     nice(-200);
     const char *tmp_c;
@@ -82,7 +82,7 @@ Java_net_bastibl_wlan_MainActivity_fgStart(JNIEnv * env, jobject /*this*/, jstri
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_net_bastibl_wlan_MainActivity_fgStop(JNIEnv * env, jobject /*this*/) {
+Java_net_bastibl_txfile_MainActivity_fgStop(JNIEnv * env, jobject /*this*/) {
     tb->stop();
     tb->wait();
 
