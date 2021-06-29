@@ -6,54 +6,49 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark"
+    android:orientation="vertical"
     tools:context=".MainActivity">
-
-    <TextView
-        android:id="@+id/sample_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/plot"
-        tools:layout_editor_absoluteY="420dp" />
-
-    <SeekBar
-        android:id="@+id/seekBar"
-        android:layout_width="0dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:progressBackgroundTint="#F44336"
-        android:progressTint="#F44336"
-        android:thumbTint="#F44336"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sample_text" />
 
     <RadioGroup
         android:id="@+id/radio_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        ap:layout_constraintBottom_toTopOf="@+id/sample_text"
+        ap:layout_constraintBottom_toTopOf="@+id/constraintLayout"
         ap:layout_constraintEnd_toEndOf="parent"
         ap:layout_constraintStart_toStartOf="parent"
         ap:layout_constraintTop_toTopOf="parent">
 
     </RadioGroup>
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Button"
-        ap:layout_constraintBottom_toTopOf="@+id/sample_text"
+        ap:layout_constraintBottom_toBottomOf="parent"
         ap:layout_constraintEnd_toEndOf="parent"
         ap:layout_constraintStart_toStartOf="parent"
-        ap:layout_constraintTop_toBottomOf="@+id/radio_group" />
+        ap:layout_constraintTop_toTopOf="@id/radio_group">
+
+        <Button
+            android:id="@+id/button_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop"
+            ap:layout_constraintEnd_toEndOf="parent"
+            ap:layout_constraintHorizontal_bias="0.5"
+            ap:layout_constraintStart_toEndOf="@+id/button_send"
+            ap:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/button_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send"
+            ap:layout_constraintBottom_toBottomOf="parent"
+            ap:layout_constraintEnd_toStartOf="@+id/button_stop"
+            ap:layout_constraintHorizontal_bias="0.5"
+            ap:layout_constraintStart_toStartOf="parent"
+            ap:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

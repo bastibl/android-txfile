@@ -14,6 +14,7 @@ import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.widget.RadioButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -90,45 +91,45 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
+        checkStoragePermission()
+
         @Suppress("DEPRECATION")
         val external = Environment.getExternalStorageDirectory()
-        val uhdDir = File(external.toString() + File.separator + "uhd")
-
-        if (!uhdDir.exists()) {
-            Log.d("uhd", "UHD directory does not exist, creating.")
-            uhdDir.mkdirs()
-        }
+        // val gnuradioDir = File(external.toString() + File.separator + "gnuradio")
+        // val volkDir = File(external.toString() + File.separator + "volk")
+        // if (!gnuradioDir.exists()) {
+        //     Log.d("uhd", "UHD directory does not exist, creating.")
+        //     gnuradioDir.mkdirs()
+        // }
 
         val assetManager = assets
         try {
-            val files = assetManager.list("uhd")
+            val files = assetManager.list("files")
             for (f in files!!) {
                 Log.d("uhd", "UHD asset file: $f")
+                val btn = RadioButton(this);
+                btn.text = f;
+                binding.radioGroup.addView(btn);
             }
-            for (f in files) {
-                Log.d("uhd", "Copying file:$f")
-                val `in` = assetManager.open("uhd" + File.separator + f)
-                val out: OutputStream = FileOutputStream(uhdDir.toString() + File.separator + f)
-                copyFile(`in`, out)
-                `in`.close()
-                out.flush()
-                out.close()
-            }
+            //for (f in files) {
+            //    Log.d("uhd", "Copying file:$f")
+            //    val `in` = assetManager.open("uhd" + File.separator + f)
+            //    val out: OutputStream = FileOutputStream(uhdDir.toString() + File.separator + f)
+            //    copyFile(`in`, out)
+            //    `in`.close()
+            //    out.flush()
+            //    out.close()
+            //}
         } catch (e: IOException) {
             Log.e("uhd", "Failed to copy asset file", e)
         }
 
-
-
-
-        thread(start=true) {
-            while (!Thread.currentThread().isInterrupted) {
-                // runOnUiThread {
-                // }
-            }
-        }
-
-        checkStoragePermission()
+        // thread(start=true) {
+        //     while (!Thread.currentThread().isInterrupted) {
+        //         // runOnUiThread {
+        //         // }
+        //     }
+        // }
     }
 
     @Throws(IOException::class)
@@ -155,9 +156,6 @@ class MainActivity : AppCompatActivity() {
         Log.d("gnuradio", "#################### NEW RUN ###################")
         Log.d("gnuradio", "Found fd: $fd  usbfs_path: $usbfsPath")
         Log.d("gnuradio", "Found vid: $vid  pid: $pid")
-
-        binding.sampleText.text =
-            "Found fd: $fd  usbfsPath: $usbfsPath vid: $vid  pid: $pid"
 
         thread(start = true, priority = Thread.MAX_PRIORITY) {
             fgInit(fd, usbfsPath)

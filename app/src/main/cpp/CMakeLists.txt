@@ -30,5 +30,10 @@ target_link_libraries(native-lib
         ${TOOLCHAIN}/${ANDROID_ABI}/lib/libgnuradio-zeromq.so
         ${TOOLCHAIN}/${ANDROID_ABI}/lib/libgnuradio-ieee802_11.so
         ${TOOLCHAIN}/${ANDROID_ABI}/lib/libgnuradio-uhd.so
+        ${TOOLCHAIN}/${ANDROID_ABI}/lib/libgmpxx.so
+        ${TOOLCHAIN}/${ANDROID_ABI}/lib/libgmp.so
+        ${TOOLCHAIN}/${ANDROID_ABI}/lib/libvolk.so
         ${TOOLCHAIN}/${ANDROID_ABI}/lib/libuhd.so
+        ${TOOLCHAIN}/${ANDROID_ABI}/lib/libusb1.0.so
+        # libc++_shared.so
         ${log-lib} )
