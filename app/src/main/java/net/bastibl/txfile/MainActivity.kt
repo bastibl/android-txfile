@@ -58,7 +58,10 @@ class MainActivity : AppCompatActivity() {
         val manager = getSystemService(Context.USB_SERVICE) as UsbManager
         val deviceList: HashMap<String, UsbDevice> = manager.deviceList
         deviceList.values.forEach { device ->
-            if(device.vendorId == 0x2500) {
+            Log.d("gr", "usb dev: vendor 0x" + device.vendorId.toString(16) + " prod 0x" + device.productId.toString(16)
+                    + " prod name " + device.productName + " manuf " + device.manufacturerName)
+            //if(device.vendorId == 0x2500) {
+            if(device.manufacturerName == "Ettus Research LLC") {
                 val permissionIntent = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), 0)
                 val filter = IntentFilter(ACTION_USB_PERMISSION)
                 registerReceiver(usbReceiver, filter)
@@ -87,8 +90,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    private var thread : Thread? = null;
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,43 +133,48 @@ class MainActivity : AppCompatActivity() {
         }
         binding.radioGroup.check(1);
 
+        val token = Object()
+
         binding.buttonSend.setOnClickListener {
             if(!haveStoragePermission) {
                 binding.textView.text = "no storage permssion"
                 return@setOnClickListener
             }
-            //if(!haveHWPermission) {
-            //    binding.textView.text = "no HW permssion"
-            //    return@setOnClickListener
-            //}
-
-            thread?.let {
-                if(thread?.isAlive == true) {
-                    binding.textView.text = "flowgraph is running"
-                    return@setOnClickListener
-                }
+            if(!haveHWPermission) {
+                binding.textView.text = "no HW permssion"
+                return@setOnClickListener
             }
-
-            binding.textView.text = "starting flowgraph"
 
             val sampleFile = File(samples[binding.radioGroup.checkedRadioButtonId - 1].toString())
 
-            thread = thread(start = true, priority = Thread.MAX_PRIORITY) {
+            thread {
+                runOnUiThread {
+                    binding.textView.text = "initialzing flowgraph\nfd " + (usbConnection?.fileDescriptor ?: 0).toString()  + "  path: " + usbPath + " filename: " + sampleFile
+                }
                 fgInit(usbConnection?.fileDescriptor ?: 0, usbPath ?: "", sampleFile.toString())
-                fgStart()
-                Log.d("gr", "fg thread exiting")
+                runOnUiThread {
+                    binding.textView.text = "starting flowgraph"
+                }
+                fgStart(cacheDir.absolutePath)
+                runOnUiThread {
+                    binding.textView.text = "waiting to stop"
+                }
+                synchronized(token) {
+                    token.wait()
+                }
+                runOnUiThread {
+                    binding.textView.text = "stopping flowgraph"
+                }
+                fgStop()
+                runOnUiThread {
+                    binding.textView.text = "stopped flowgraph"
+                }
             }
         }
 
         binding.buttonStop.setOnClickListener {
-            thread?.let {
-                if(thread?.isAlive == true) {
-                    binding.textView.text = "flowgraph is running"
-                    fgStop();
-                    thread?.join();
-                } else {
-                    binding.textView.text = "thread is not alive"
-                }
+            synchronized(token) {
+                token.notify()
             }
         }
     }
@@ -191,16 +197,11 @@ class MainActivity : AppCompatActivity() {
         Log.d("gr", "#################### NEW RUN ###################")
         Log.d("gr", "Found fd: $fd  usbfs_path: $usbPath")
         Log.d("gr", "Found vid: $vid  pid: $pid")
-
-    }
-
-    override fun onStop() {
-        fgStop()
-        super.onStop()
+        Log.d("gr", "Manuf: ${usbDevice.manufacturerName}  prod: ${usbDevice.productName}")
     }
 
     private external fun fgInit(fd: Int, usbfsPath: String, sampleFile: String): Void
-    private external fun fgStart(): Void
+    private external fun fgStart(tmpDir: String): Void
     private external fun fgStop(): Void
 
     companion object {
